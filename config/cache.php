@@ -53,4 +53,18 @@ return [
 
     'prefix' => env('CACHE_PREFIX', 'laravel'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Serializable Classes
+    |--------------------------------------------------------------------------
+    |
+    | The application only caches scalars (IP block markers, rate limiter
+    | counters). Refusing to unserialize objects means that whoever can write
+    | to the cache backend (Redis) cannot turn a cache read into PHP object
+    | injection.
+    |
+    */
+
+    'serializable_classes' => false,
+
 ];
