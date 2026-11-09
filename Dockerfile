@@ -37,6 +37,11 @@ RUN apk add --no-cache \
     && apk del --no-network .build-deps \
     && rm -rf /tmp/pear /usr/src/php.tar.xz
 
+# PHP: production defaults plus this application's hardening (docker/php/php.ini)
+RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+COPY docker/php/php.ini $PHP_INI_DIR/conf.d/zz-webhook.ini
+COPY docker/php-fpm/zzz-webhook.conf /usr/local/etc/php-fpm.d/zzz-webhook.conf
+
 # nginx: main config + application vhost (proxies socket.io to laravel-echo-server)
 COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY nginx.conf /etc/nginx/http.d/default.conf
@@ -49,6 +54,18 @@ RUN chmod +x /etc/s6-overlay/s6-rc.d/*/run
 # Make the container environment (APP_*, REDIS_*, ...) visible to the services
 ENV S6_KEEP_ENV=1 \
     S6_BEHAVIOUR_IF_STAGE2_FAILS=2
+
+# Tunables referenced from docker/php/php.ini and docker/php-fpm/zzz-webhook.conf
+ENV PHP_MEMORY_LIMIT=128M \
+    PHP_SESSION_COOKIE_SECURE=0 \
+    PHP_OPCACHE_VALIDATE_TIMESTAMPS=0 \
+    PHP_FPM_MAX_CHILDREN=20
+
+# Everything (s6, nginx, php-fpm and the container command) runs as www-data:
+# give that user the few runtime paths it has to write to.
+RUN mkdir -p /run/nginx \
+    && chown www-data:www-data /run /run/nginx \
+    && chown -R www-data:www-data /var/lib/nginx
 
 WORKDIR /var/www/html
 
@@ -66,7 +83,8 @@ USER www-data
 
 COPY --chown=www-data:www-data composer.json composer.lock /var/www/html/
 
-RUN composer install --no-interaction --no-autoloader --no-dev --prefer-dist --no-scripts \
+# allow_url_fopen is disabled for the application (docker/php/php.ini) but composer needs it
+RUN php -d allow_url_fopen=On /usr/bin/composer install --no-interaction --no-autoloader --no-dev --prefer-dist --no-scripts \
     && rm -rf /home/www-data/.composer/cache
 
 COPY --chown=www-data:www-data storage /var/www/html/storage
@@ -78,7 +96,7 @@ COPY --chown=www-data:www-data config /var/www/html/config
 COPY --chown=www-data:www-data app /var/www/html/app
 COPY --chown=www-data:www-data resources /var/www/html/resources
 
-RUN composer dump-autoload --optimize --no-dev \
+RUN php -d allow_url_fopen=On /usr/bin/composer dump-autoload --optimize --no-dev \
     && php artisan package:discover \
     && touch /var/www/html/database/database.sqlite \
     && php artisan migrate --force
@@ -92,8 +110,19 @@ COPY --chown=www-data:www-data --from=npm /app/public/js /var/www/html/public/js
 
 FROM base AS runtime
 
-COPY --from=vendor --chown=www-data:www-data /var/www/html /var/www/html
+# Application code is owned by root and read-only for the PHP processes; only the
+# directories Laravel writes to at runtime belong to www-data.
+COPY --from=vendor --chown=root:root /var/www/html /var/www/html
+RUN chown -R www-data:www-data \
+        /var/www/html/storage \
+        /var/www/html/bootstrap/cache \
+        /var/www/html/database
 
-EXPOSE 80
+USER www-data
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1
 
 ENTRYPOINT ["/init"]

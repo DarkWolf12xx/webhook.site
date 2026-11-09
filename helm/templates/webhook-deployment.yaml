@@ -14,6 +14,13 @@ spec:
       labels:
         app: webhook-site
     spec:
+      securityContext:
+        runAsNonRoot: true
+        # www-data in the Alpine-based image
+        runAsUser: 82
+        runAsGroup: 82
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: webhook-site
           args:
@@ -24,10 +31,11 @@ spec:
             - --tries=3
             - --timeout=10
           env:
+            # Never enable debug mode on a reachable instance (stack traces in responses)
             - name: APP_DEBUG
-              value: "true"
+              value: "false"
             - name: APP_ENV
-              value: dev
+              value: production
             - name: APP_LOG
               value: errorlog
             - name: APP_URL
@@ -43,9 +51,17 @@ spec:
             - name: QUEUE_DRIVER
               value: redis
             - name: REDIS_HOST
-              value: redis:6379
+              value: redis
+            - name: REDIS_PORT
+              value: "6379"
           image: webhooksite/webhook.site
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
           ports:
-            - containerPort: 80
+            # The container runs unprivileged and listens on 8080
+            - containerPort: 8080
               protocol: TCP
       restartPolicy: Always

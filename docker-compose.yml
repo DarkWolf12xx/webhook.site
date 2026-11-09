@@ -8,10 +8,13 @@ services:
       context: ./
     command: php artisan queue:work --daemon --tries=3 --timeout=10
     ports:
-      - "8084:80"
+      # The container runs unprivileged and listens on 8080
+      - "8084:8080"
     environment:
-      - APP_ENV=dev
-      - APP_DEBUG=true
+      - APP_ENV=production
+      # Never enable debug mode on a publicly reachable instance: error responses
+      # would include stack traces and file paths.
+      - APP_DEBUG=false
       - APP_URL=http://localhost:8084
       - APP_LOG=errorlog
       - DB_CONNECTION=sqlite
@@ -20,12 +23,38 @@ services:
       - CACHE_DRIVER=redis
       - QUEUE_DRIVER=redis
       - ECHO_HOST_MODE=path
+      # Set to 1 when the site is served over HTTPS
+      - PHP_SESSION_COOKIE_SECURE=0
     depends_on:
       - redis
+      # nginx refuses to start until the socket.io upstream resolves
+      - laravel-echo-server
+    networks:
+      - frontend
+      - backend
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    pids_limit: 512
+    restart: unless-stopped
 
   redis:
     container_name: "webhook-redis"
     image: "redis:8.10.3-alpine@sha256:71885d8cc6e42f2bc0aa2eb853bfc4be200b5108a46ac50e117ae1df0531fb80"
+    # Not published on the host; only reachable from the internal backend network
+    networks:
+      - backend
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The image's entrypoint fixes /data ownership and drops to the redis user
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    restart: unless-stopped
 
   laravel-echo-server:
     container_name: "laravel-echo-server"
@@ -36,7 +65,7 @@ services:
       - start
       - --force
     environment:
-      - LARAVEL_ECHO_SERVER_AUTH_HOST=http://webhook
+      - LARAVEL_ECHO_SERVER_AUTH_HOST=http://webhook:8080
       - LARAVEL_ECHO_SERVER_HOST=0.0.0.0
       - LARAVEL_ECHO_SERVER_PORT=6001
       - ECHO_REDIS_PORT=6379
@@ -48,3 +77,18 @@ services:
       - ECHO_ALLOW_HEADERS=*
     depends_on:
       - redis
+    # Reached through nginx in the webhook container (/socket.io); not published
+    networks:
+      - backend
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: unless-stopped
+
+networks:
+  # Published HTTP entry point (and outbound access for the app, e.g. Sentry/Pusher)
+  frontend: {}
+  # Redis and laravel-echo-server: no route to the outside world
+  backend:
+    internal: true

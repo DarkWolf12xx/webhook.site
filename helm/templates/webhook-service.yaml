@@ -7,7 +7,7 @@ spec:
   ports:
   - name: "8084"
     port: 8084
-    targetPort: 80
+    targetPort: 8080
   selector:
     app: webhook-site
 ---
