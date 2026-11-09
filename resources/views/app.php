@@ -1,14 +1,15 @@
 <!DOCTYPE html>
-<html ng-app="app" ng-controller="AppController">
+<?php $js = fn ($value) => json_encode($value, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>
+<html ng-app="app" ng-controller="AppController" ng-csp="no-unsafe-eval">
 <head>
     <title>Webhook Tester</title>
     
-    <script>
+    <script nonce="<?=e($cspNonce)?>">
         AppConfig = {
-            Broadcaster: "<?=config('broadcasting.default') == 'redis' ? 'socket.io' : 'pusher' ?>",
-            EchoHostMode: "<?=config('broadcasting.echo_host_mode')?>",
-            PusherToken: "<?=config('broadcasting.connections.pusher.key')?>",
-            MaxRequests: <?=config('app.max_requests')?>,
+            Broadcaster: <?=$js(config('broadcasting.default') == 'redis' ? 'socket.io' : 'pusher')?>,
+            EchoHostMode: <?=$js((string) config('broadcasting.echo_host_mode'))?>,
+            PusherToken: <?=$js((string) config('broadcasting.connections.pusher.key'))?>,
+            MaxRequests: <?=$js((int) config('app.max_requests'))?>,
         };
     </script>
 

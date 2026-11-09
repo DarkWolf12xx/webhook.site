@@ -1,0 +1,4 @@
+#!/bin/sh
+# nginx creates its temp directories (see docker/nginx/nginx.conf) but not their parent
+mkdir -p /tmp/nginx
+exec nginx -e /dev/stderr -g 'daemon off;'

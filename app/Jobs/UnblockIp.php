@@ -33,7 +33,8 @@ class UnblockIp extends Job implements ShouldQueue
             return;
         }
 
-        $process = new Process(sprintf('sudo ufw delete deny from %s', $this->ip));
+        // Symfony Process requires an argument array (no shell is involved).
+        $process = new Process(['sudo', 'ufw', 'delete', 'deny', 'from', $this->ip]);
         $process->run();
 
         $log->info('Unblocking ip', [

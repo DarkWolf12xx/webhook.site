@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  php:
+    name: PHP 8.5 - tests, dependency audit, static analysis
+    runs-on: ubuntu-24.04
+    services:
+      redis:
+        image: redis:8.10.3-alpine@sha256:71885d8cc6e42f2bc0aa2eb853bfc4be200b5108a46ac50e117ae1df0531fb80
+        ports:
+          - 6379:6379
+    env:
+      REDIS_HOST: 127.0.0.1
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # 2.40.0
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pdo_sqlite, pcntl
+          coverage: none
+          tools: composer:v2
+
+      - name: Validate composer.json / composer.lock
+        run: composer validate --strict
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Audit dependencies for known vulnerabilities
+        run: composer audit --locked
+
+      - name: Run tests (unit, security regression, compatibility)
+        run: |
+          touch database/database.sqlite
+          vendor/bin/phpunit
+
+      - name: Static analysis
+        run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
+
+  js:
+    name: Frontend - security regression tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+
+      - name: Run tests
+        run: node --test tests/js/*.test.js
+
+  docker:
+    name: Docker image - build and smoke test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build and start the stack
+        run: docker compose -p ci up -d --build --wait --wait-timeout 180
+
+      - name: Runtime checks
+        run: |
+          docker exec webhook-site php -v | grep -E '^PHP 8\.5\.'
+          docker exec webhook-site sh -c 'php-fpm -v' | grep -E '^PHP 8\.5\.'
+          test "$(docker exec webhook-site id -un)" = "www-data"
+          # PHP-FPM must not be reachable from other containers
+          ! docker run --rm --network ci_backend alpine:3.23 nc -z -w 3 webhook-site 9000
+
+      - name: HTTP smoke test
+        run: |
+          set -e
+          curl -fsS -o /dev/null http://127.0.0.1:8084/
+          TOKEN=$(curl -fsS -X POST http://127.0.0.1:8084/token | python3 -c 'import sys, json; print(json.load(sys.stdin)["uuid"])')
+          curl -fsS -X POST -H 'Content-Type: application/json' -d '{"ci":true}' "http://127.0.0.1:8084/$TOKEN/ci"
+          curl -fsS "http://127.0.0.1:8084/token/$TOKEN/requests" | grep -q '"total":1'
+
+      - name: Logs
+        if: always()
+        run: docker compose -p ci logs --no-color

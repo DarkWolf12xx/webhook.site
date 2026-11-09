@@ -1,5 +1,6 @@
 let prettyData = require('pretty-data').pd;
 let moment = require('moment');
+let requestToCurl = require('./curl').requestToCurl;
 
 angular
     .module("app", [
@@ -312,22 +313,8 @@ angular
         $scope.convertRequest = (function (request, as) {
             switch (as) {
                 case 'curl':
-                    let curl = `curl -X '${request.method}' '${request.url}'`;
-
-                    // Headers
-                    for (let header in request.headers) {
-                        if (!request.headers.hasOwnProperty(header)) {
-                            continue;
-                        }
-                        curl += ` -H '${header}: ${request.headers[header]}'`;
-                    }
-
-                    // Body
-                    if (request.content !== null && request.content !== '') {
-                        curl += ` -d $'${request.content}'`;
-                    }
-
-                    return curl;
+                    // Shell-quotes every (sender-controlled) value, see curl.js
+                    return requestToCurl(request);
 
                 case 'HAR':
                     const headers2har = function(headers) {

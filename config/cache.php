@@ -7,60 +7,36 @@ return [
     | Default Cache Store
     |--------------------------------------------------------------------------
     |
-    | This option controls the default cache connection that gets used while
-    | using this caching library. This connection is used when another is
-    | not explicitly specified when executing a given caching function.
+    | CACHE_DRIVER is the variable name used by earlier releases of this
+    | application and is still honoured; CACHE_STORE takes precedence.
     |
     */
 
-    'default' => env('CACHE_DRIVER', 'file'),
+    'default' => env('CACHE_STORE', env('CACHE_DRIVER', 'file')),
 
     /*
     |--------------------------------------------------------------------------
     | Cache Stores
     |--------------------------------------------------------------------------
-    |
-    | Here you may define all of the cache "stores" for your application as
-    | well as their drivers. You may even define multiple stores for the
-    | same cache driver to group types of items stored in your caches.
-    |
     */
 
     'stores' => [
 
-        'apc' => [
-            'driver' => 'apc',
-        ],
-
         'array' => [
             'driver' => 'array',
-        ],
-
-        'database' => [
-            'driver' => 'database',
-            'table' => 'cache',
-            'connection' => null,
+            'serialize' => false,
         ],
 
         'file' => [
             'driver' => 'file',
             'path' => storage_path('framework/cache'),
-        ],
-
-        'memcached' => [
-            'driver' => 'memcached',
-            'servers' => [
-                [
-                    'host' => env('MEMCACHED_HOST', '127.0.0.1'),
-                    'port' => env('MEMCACHED_PORT', 11211),
-                    'weight' => 100,
-                ],
-            ],
+            'lock_path' => storage_path('framework/cache'),
         ],
 
         'redis' => [
             'driver' => 'redis',
             'connection' => env('REDIS_CACHE_CONNECTION', 'default'),
+            'lock_connection' => env('REDIS_CACHE_LOCK_CONNECTION', 'default'),
         ],
 
     ],
@@ -70,12 +46,25 @@ return [
     | Cache Key Prefix
     |--------------------------------------------------------------------------
     |
-    | When utilizing a RAM based store such as APC or Memcached, there might
-    | be other applications utilizing the same cache. So, we'll specify a
-    | value to get prefixed to all our keys so we can avoid collisions.
+    | Kept at the value used by earlier releases so existing cache keys
+    | (e.g. IP block markers) remain valid after the upgrade.
     |
     */
 
-    'prefix' => 'laravel',
+    'prefix' => env('CACHE_PREFIX', 'laravel'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Serializable Classes
+    |--------------------------------------------------------------------------
+    |
+    | The application only caches scalars (IP block markers, rate limiter
+    | counters). Refusing to unserialize objects means that whoever can write
+    | to the cache backend (Redis) cannot turn a cache read into PHP object
+    | injection.
+    |
+    */
+
+    'serializable_classes' => false,
 
 ];

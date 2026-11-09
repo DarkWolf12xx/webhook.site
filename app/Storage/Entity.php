@@ -22,21 +22,45 @@ abstract class Entity implements Arrayable, Jsonable
     }
 
     /**
-     * @param $name
+     * Attributes missing from stored data (e.g. "cors" on URLs created before that
+     * setting existed) read as null.
+     *
+     * @param string $name
      * @return mixed
      */
     public function __get($name)
     {
-        return $this->attributes[$name];
+        return $this->attributes[$name] ?? null;
     }
 
     /**
-     * @param $name
-     * @param $value
+     * @param string $name
+     * @param mixed $value
      */
     public function __set($name, $value)
     {
         $this->attributes[$name] = $value;
+    }
+
+    /**
+     * Without this, isset() on an attribute was always false.
+     *
+     * @param string $name
+     * @return bool
+     */
+    public function __isset($name)
+    {
+        return isset($this->attributes[$name]);
+    }
+
+    /**
+     * Without this, unset() on an attribute silently did nothing.
+     *
+     * @param string $name
+     */
+    public function __unset($name)
+    {
+        unset($this->attributes[$name]);
     }
 
     /**

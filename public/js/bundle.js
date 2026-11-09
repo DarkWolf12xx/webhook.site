@@ -6215,6 +6215,7 @@ exports.pd= new pp;
 
 var prettyData = require('pretty-data').pd;
 var moment = require('moment');
+var requestToCurl = require('./curl').requestToCurl;
 
 angular.module("app", ['ui.router', 'hljs']).config(['$stateProvider', '$urlRouterProvider', '$urlMatcherFactoryProvider', function ($stateProvider, $urlRouterProvider, $urlMatcherFactoryProvider) {
     var GUID_REGEXP = /^[a-f\d]{8}-([a-f\d]{4}-){3}[a-f\d]{12}$/i;
@@ -6496,33 +6497,19 @@ angular.module("app", ['ui.router', 'hljs']).config(['$stateProvider', '$urlRout
     $scope.convertRequest = function (request, as) {
         switch (as) {
             case 'curl':
-                var curl = 'curl -X \'' + request.method + '\' \'' + request.url + '\'';
-
-                // Headers
-                for (var header in request.headers) {
-                    if (!request.headers.hasOwnProperty(header)) {
-                        continue;
-                    }
-                    curl += ' -H \'' + header + ': ' + request.headers[header] + '\'';
-                }
-
-                // Body
-                if (request.content !== null && request.content !== '') {
-                    curl += ' -d $\'' + request.content + '\'';
-                }
-
-                return curl;
+                // Shell-quotes every (sender-controlled) value, see curl.js
+                return requestToCurl(request);
 
             case 'HAR':
                 var headers2har = function headers2har(headers) {
                     var convHeaders = [];
-                    for (var _header in headers) {
-                        if (!headers.hasOwnProperty(_header)) {
+                    for (var header in headers) {
+                        if (!headers.hasOwnProperty(header)) {
                             continue;
                         }
                         convHeaders.push({
-                            'name': _header,
-                            'value': headers[_header][0]
+                            'name': header,
+                            'value': headers[header][0]
                         });
                     }
                     return convHeaders;
@@ -6823,7 +6810,47 @@ angular.module("app", ['ui.router', 'hljs']).config(['$stateProvider', '$urlRout
     $rootScope.$stateParams = $stateParams;
 }]);
 
-},{"moment":2,"pretty-data":3}],5:[function(require,module,exports){
+},{"./curl":5,"moment":2,"pretty-data":3}],5:[function(require,module,exports){
+"use strict";
+
+/**
+ * "Copy as cURL" for captured requests.
+ *
+ * Every part of a captured request (method, URL including the Host header, header
+ * names and values, body) is chosen by whoever sent it, and users paste the result
+ * into a shell. Each value is therefore emitted as one single-quoted shell word; a
+ * single quote inside a value is written as '\'' (end quote, escaped quote, reopen).
+ * The body is passed with --data-raw so that a body starting with "@" is sent as-is
+ * instead of making curl upload a local file.
+ */
+
+function shellQuote(value) {
+    return "'" + String(value).replace(/'/g, "'\\''") + "'";
+}
+
+function requestToCurl(request) {
+    var parts = ['curl', '-X', shellQuote(request.method), shellQuote(request.url)];
+
+    for (var header in request.headers) {
+        if (!request.headers.hasOwnProperty(header)) {
+            continue;
+        }
+        parts.push('-H', shellQuote(header + ': ' + request.headers[header]));
+    }
+
+    if (request.content !== null && request.content !== undefined && request.content !== '') {
+        parts.push('--data-raw', shellQuote(request.content));
+    }
+
+    return parts.join(' ');
+}
+
+module.exports = {
+    shellQuote: shellQuote,
+    requestToCurl: requestToCurl
+};
+
+},{}],6:[function(require,module,exports){
 'use strict';
 
 var _laravelEcho = require('laravel-echo');
@@ -6845,6 +6872,6 @@ if (AppConfig.EchoHostMode === 'port') {
 
 window.Echo = new _laravelEcho2.default(echoConfig);
 
-},{"laravel-echo":1}]},{},[5,4]);
+},{"laravel-echo":1}]},{},[6,4]);
 
 //# sourceMappingURL=bundle.js.map

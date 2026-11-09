@@ -1,6 +1,32 @@
-database/*sqlite
+# Version control, local secrets and developer files never belong in the build context
+.git
+.github
+.idea
+.env
+.env.*
+!.env.example
+*.paw
+
+# Dependencies are installed inside the image
 vendor/
 node_modules/
-bootstrap/cache/*
+
+# Built assets are produced by the npm build stage
 public/css/
 public/js/
+
+# Local runtime state (logs may contain request data; caches/sessions are per host)
+database/*sqlite
+bootstrap/cache/*
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/app/*
+!**/.gitignore
+
+# Not needed in the image
+tests/
+helm/
+.phpunit.result.cache
+.phpunit.cache

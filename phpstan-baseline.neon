@@ -1,0 +1,79 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Property App\\Http\\Controllers\\RequestController\:\:\$cache is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Http/Controllers/RequestController.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Middleware\\EncryptCookies\:\:\$except is not covariant with PHPDoc type array\<int, string\> of overridden property Illuminate\\Cookie\\Middleware\\EncryptCookies\:\:\$except\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Middleware/EncryptCookies.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Http\\Middleware\\VerifyCsrfToken\:\:\$except is not covariant with PHPDoc type array\<int, string\> of overridden property Illuminate\\Foundation\\Http\\Middleware\\PreventRequestForgery\:\:\$except\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Http/Middleware/VerifyCsrfToken.php
+
+		-
+			message: '#^PHPDoc type array of property App\\Providers\\EventServiceProvider\:\:\$listen is not covariant with PHPDoc type array\<string, array\<int, string\>\> of overridden property Illuminate\\Foundation\\Support\\Providers\\EventServiceProvider\:\:\$listen\.$#'
+			identifier: property.phpDocType
+			count: 1
+			path: app/Providers/EventServiceProvider.php
+
+		-
+			message: '#^Method App\\Storage\\Redis\\RequestStore\:\:delete\(\) should return App\\Storage\\Request but returns \(int\|Redis\|false\)\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Storage/Redis/RequestStore.php
+
+		-
+			message: '#^Method App\\Storage\\Redis\\RequestStore\:\:deleteByToken\(\) should return App\\Storage\\Request but returns \(int\|Redis\|false\)\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Storage/Redis/RequestStore.php
+
+		-
+			message: '#^Method App\\Storage\\Redis\\RequestStore\:\:store\(\) should return App\\Storage\\Request but returns \(int\|Redis\|false\)\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Storage/Redis/RequestStore.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$sort$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/Storage/Redis/RequestStore.php
+
+		-
+			message: '#^Property App\\Storage\\Redis\\RequestStore\:\:\$redis \(Illuminate\\Support\\Facades\\Redis\) does not accept Illuminate\\Redis\\Connections\\PredisConnection\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Storage/Redis/RequestStore.php
+
+		-
+			message: '#^Method App\\Storage\\Redis\\TokenStore\:\:delete\(\) should return App\\Storage\\Token but returns \(int\|Redis\|false\)\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Storage/Redis/TokenStore.php
+
+		-
+			message: '#^Property App\\Storage\\Redis\\TokenStore\:\:\$redis \(Illuminate\\Support\\Facades\\Redis\) does not accept Illuminate\\Redis\\Connections\\PredisConnection\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Storage/Redis/TokenStore.php
+
+		-
+			message: '#^Call to an undefined static method Illuminate\\Support\\Facades\\Log\:\:shouldHaveReceived\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: tests/Security/ErrorDisclosureTest.php
+
+		-
+			message: '#^Call to an undefined static method Illuminate\\Support\\Facades\\Log\:\:shouldNotHaveReceived\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: tests/Security/ErrorDisclosureTest.php

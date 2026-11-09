@@ -70,10 +70,10 @@ class TokenController extends Controller
     {
         $token = $this->tokens->find($tokenId);
 
-        $token->default_content = $request->get('default_content', '');
-        $token->default_status = (int)$request->get('default_status', 200);
-        $token->default_content_type = $request->get('default_content_type', 'text/plain');
-        $token->timeout = (int)$request->get('timeout', null);
+        $token->default_content = $request->input('default_content', '');
+        $token->default_status = (int)$request->input('default_status', 200);
+        $token->default_content_type = $request->input('default_content_type', 'text/plain');
+        $token->timeout = (int)$request->input('timeout', null);
 
         $this->tokens->store($token);
 
@@ -88,7 +88,9 @@ class TokenController extends Controller
 
         $this->tokens->store($token);
 
-        logger()->info("[CORS] $tokenId toggle");
+        // The token ID is a bearer credential for the URL's captured requests:
+        // keep it out of the logs.
+        logger()->info('[CORS] toggle', ['enabled' => $token->cors]);
 
         return new JsonResponse(['enabled' => $token->cors]);
     }

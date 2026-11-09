@@ -2,20 +2,20 @@
 
 namespace App\Exceptions;
 
-use Exception;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Throwable;
 
 class Handler extends ExceptionHandler
 {
     /**
      * A list of the exception types that should not be reported.
      *
-     * @var array
+     * @var array<int, class-string<Throwable>>
      */
     protected $dontReport = [
         AuthorizationException::class,
@@ -34,13 +34,16 @@ class Handler extends ExceptionHandler
      *
      * This is a great spot to send exceptions to Sentry, Bugsnag, etc.
      *
-     * @param  \Exception  $e
+     * @param  Throwable  $e
      * @return void
+     *
+     * @throws Throwable
      */
-    public function report(Exception $e)
+    public function report(Throwable $e)
     {
         if (app()->bound('sentry') && $this->shouldReport($e)) {
-            $this->sentryId = app('sentry')->captureException($e);
+            $eventId = app('sentry')->captureException($e);
+            $this->sentryId = $eventId !== null ? (string) $eventId : null;
         }
 
         parent::report($e);
@@ -50,12 +53,14 @@ class Handler extends ExceptionHandler
      * Render an exception into an HTTP response.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \Exception  $e
-     * @return \Illuminate\Http\Response|Response
+     * @param  Throwable  $e
+     * @return Response
+     *
+     * @throws Throwable
      */
-    public function render($request, Exception $e)
+    public function render($request, Throwable $e)
     {
-        if ($e instanceof ValidationException) {
+        if ($e instanceof ValidationException && $e->response !== null) {
             return $e->getResponse();
         }
 
@@ -64,7 +69,7 @@ class Handler extends ExceptionHandler
             $json = $this->renderJson($request, $e);
 
             if ($e instanceof HttpException) {
-                return response()->json($json, $e->getStatusCode());
+                return response()->json($json, $e->getStatusCode(), $e->getHeaders());
             }
 
             return response()->json($json, Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -73,7 +78,7 @@ class Handler extends ExceptionHandler
         return parent::render($request, $e);
     }
 
-    private function renderJson($request, Exception $e)
+    private function renderJson($request, Throwable $e)
     {
         $message = 'An internal error occurred';
 
