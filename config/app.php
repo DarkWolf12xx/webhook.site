@@ -57,7 +57,9 @@ return [
     |
     */
 
-    'debug' => (bool) env('APP_DEBUG', true),
+    // Off unless explicitly enabled: debug mode adds exception class, message, file,
+    // line and stack trace to every error response.
+    'debug' => (bool) env('APP_DEBUG', false),
 
     /*
     |--------------------------------------------------------------------------

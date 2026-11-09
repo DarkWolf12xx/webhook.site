@@ -88,7 +88,9 @@ class TokenController extends Controller
 
         $this->tokens->store($token);
 
-        logger()->info("[CORS] $tokenId toggle");
+        // The token ID is a bearer credential for the URL's captured requests:
+        // keep it out of the logs.
+        logger()->info('[CORS] toggle', ['enabled' => $token->cors]);
 
         return new JsonResponse(['enabled' => $token->cors]);
     }

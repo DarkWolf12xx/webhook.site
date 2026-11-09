@@ -11,6 +11,7 @@ use Illuminate\Cache\Repository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Http\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class RequestController extends Controller
 {
@@ -227,10 +228,10 @@ class RequestController extends Controller
             'newest'
         );
 
-        if (empty($requests)) {
+        if ($requests->isEmpty()) {
             throw new NotFoundHttpException('Request not found');
         }
 
-        return new JsonResponse($requests[0]);
+        return new JsonResponse($requests->first());
     }
 }
