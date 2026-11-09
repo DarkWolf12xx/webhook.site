@@ -24,6 +24,13 @@ There are two versions of Webhook.site:
 
 * The cloud version at [https://webhook.site](https://webhook.site) which has more features, some of them requiring a paid subscription.
 
+## Self-hosting with Docker
+
+`docker compose up -d --build` starts the app on http://localhost:8084 (PHP 8.5 / Laravel 13).
+The application container runs unprivileged and listens on port 8080; Redis data is kept in the
+`redis-data` volume. Upgrade, configuration and rollback notes, as well as the results of the
+latest security audit, are in [SECURITY_UPGRADE_REPORT.md](SECURITY_UPGRADE_REPORT.md).
+
 ## Acknowledgements
 
 * The app was built with [Laravel](https://laravel.com) for the API and Angular.js for the frontend SPA.
