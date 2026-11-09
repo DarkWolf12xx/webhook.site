@@ -24,13 +24,16 @@ class Request extends Entity
 
     /**
      * @param HttpRequest $httpRequest
+     * @param string $tokenId ID of the webhook URL (token) the request was sent to
      * @return Request
      */
-    public static function createFromRequest(HttpRequest $httpRequest)
+    public static function createFromRequest(HttpRequest $httpRequest, string $tokenId)
     {
         $request = new self([
             'uuid' => Uuid::uuid4()->toString(),
-            'token_id' => $httpRequest->tokenId,
+            // Never take this from $httpRequest->tokenId: Laravel resolves that magic
+            // property from query/body input before route parameters.
+            'token_id' => $tokenId,
             'ip' => $httpRequest->ip(),
             'hostname' => $httpRequest->getHost(),
             'method' => $httpRequest->getMethod(),

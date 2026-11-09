@@ -54,7 +54,7 @@ class RequestController extends Controller
             sleep($token->timeout);
         }
 
-        $request = Request::createFromRequest($httpRequest);
+        $request = Request::createFromRequest($httpRequest, $token->uuid);
 
         $this->requests->store($token, $request);
 
