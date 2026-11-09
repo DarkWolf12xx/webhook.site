@@ -46,6 +46,11 @@ services:
     # evicts the webhook URLs/requests closest to expiry (they all have a TTL);
     # queued jobs have no TTL and are never evicted. 0 (default) = no cap.
     command: ["redis-server", "--maxmemory", "${REDIS_MAXMEMORY:-0}", "--maxmemory-policy", "volatile-ttl"]
+    # The redis image declares no VOLUME: without this, webhook URLs and captured
+    # requests only lived in the container's writable layer and were lost whenever
+    # the container was re-created (image update, config change, `down`/`up`).
+    volumes:
+      - redis-data:/data
     # Not published on the host; only reachable from the internal backend network
     networks:
       - backend
@@ -89,6 +94,9 @@ services:
     cap_drop:
       - ALL
     restart: unless-stopped
+
+volumes:
+  redis-data: {}
 
 networks:
   # Published HTTP entry point (and outbound access for the app, e.g. Sentry/Pusher)
