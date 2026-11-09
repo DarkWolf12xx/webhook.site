@@ -25,6 +25,11 @@ return [
     // Set to an empty string to disable (not recommended for public instances).
     'webhook_response_csp' => env('WEBHOOK_RESPONSE_CSP', 'sandbox'),
 
+    // How many webhook URLs one client IP may create per minute (0 = unlimited).
+    // Every URL is kept in Redis for 'expiry' seconds and can hold 'max_requests'
+    // captured requests, so unbounded creation exhausts memory.
+    'token_create_rate_limit' => (int) env('WEBHOOK_TOKEN_RATE_LIMIT', 60),
+
     /*
     |--------------------------------------------------------------------------
     | Application Name

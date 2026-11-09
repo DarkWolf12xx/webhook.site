@@ -42,6 +42,10 @@ services:
   redis:
     container_name: "webhook-redis"
     image: "redis:8.10.3-alpine@sha256:71885d8cc6e42f2bc0aa2eb853bfc4be200b5108a46ac50e117ae1df0531fb80"
+    # Set REDIS_MAXMEMORY (e.g. 1gb) to cap memory use. When the cap is reached Redis
+    # evicts the webhook URLs/requests closest to expiry (they all have a TTL);
+    # queued jobs have no TTL and are never evicted. 0 (default) = no cap.
+    command: ["redis-server", "--maxmemory", "${REDIS_MAXMEMORY:-0}", "--maxmemory-policy", "volatile-ttl"]
     # Not published on the host; only reachable from the internal backend network
     networks:
       - backend

@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\RateLimiter;
 
 class RouteServiceProvider extends ServiceProvider
 {
@@ -24,6 +27,15 @@ class RouteServiceProvider extends ServiceProvider
     public function boot()
     {
         parent::boot();
+
+        // Webhook URL creation, per client IP (see config/app.php)
+        RateLimiter::for('token-create', function (Request $request) {
+            $perMinute = (int) config('app.token_create_rate_limit');
+
+            return $perMinute > 0
+                ? Limit::perMinute($perMinute)->by($request->ip())
+                : Limit::none();
+        });
     }
 
     /**

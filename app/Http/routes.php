@@ -23,7 +23,8 @@ $router->group(['middleware' => ['api']], function () use ($router) {
 
     // Tokens
     $router->get('token/{tokenId}', 'TokenController@find');
-    $router->post('token', 'TokenController@create');
+    $router->post('token', 'TokenController@create')
+        ->middleware(\Illuminate\Routing\Middleware\ThrottleRequests::class.':token-create');
     $router->delete('token/{tokenId}', 'TokenController@delete');
     $router->put('token/{tokenId}', 'TokenController@update');
     $router->put('token/{tokenId}/cors/toggle', 'TokenController@toggleCors');
