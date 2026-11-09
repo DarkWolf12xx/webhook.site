@@ -1,0 +1,14 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    level: 5
+    paths:
+        - app
+        - config
+        - database
+        - tests
+    excludePaths:
+        # route definitions are included from RouteServiceProvider::map() with $router in scope
+        - app/Http/routes.php

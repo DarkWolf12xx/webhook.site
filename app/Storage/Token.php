@@ -6,6 +6,20 @@ use App\Http\Requests\CreateTokenRequest;
 use Carbon\Carbon;
 use Ramsey\Uuid\Uuid;
 
+/**
+ * A webhook URL and its custom response settings.
+ *
+ * @property string $uuid
+ * @property string $ip
+ * @property string|null $user_agent
+ * @property string $default_content
+ * @property int $default_status
+ * @property string $default_content_type
+ * @property int $timeout
+ * @property bool|null $cors
+ * @property string $created_at
+ * @property string $updated_at
+ */
 class Token extends Entity
 {
     /**

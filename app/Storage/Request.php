@@ -6,6 +6,23 @@ use Carbon\Carbon;
 use Illuminate\Http\Request as HttpRequest;
 use Ramsey\Uuid\Uuid;
 
+/**
+ * A request captured by a webhook URL.
+ *
+ * @property string $uuid
+ * @property string $token_id
+ * @property string $ip
+ * @property string $hostname
+ * @property string $method
+ * @property string|null $user_agent
+ * @property string $content
+ * @property array<string, mixed>|null $query
+ * @property array<string, list<string|null>> $headers
+ * @property string $url
+ * @property array<string, mixed>|null $request
+ * @property string $created_at
+ * @property string $updated_at
+ */
 class Request extends Entity
 {
     /**
