@@ -18,6 +18,13 @@ return [
     // Requests and tokens will expire in 7 days (default)
     'expiry' => (int) env('WEBHOOK_EXPIRY', 604800),
 
+    // Content-Security-Policy sent with the custom response of a webhook URL and with
+    // the raw view of captured requests. Their content is chosen by third parties and
+    // served from this origin, so by default browsers render it sandboxed: no scripts,
+    // no access to this site's storage. API clients are not affected by this header.
+    // Set to an empty string to disable (not recommended for public instances).
+    'webhook_response_csp' => env('WEBHOOK_RESPONSE_CSP', 'sandbox'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Name

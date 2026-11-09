@@ -74,6 +74,8 @@ class RequestController extends Controller
             ]
         );
 
+        $response->headers->add(static::untrustedContentHeaders());
+
         if ($token->cors) {
             $response->withHeaders($this::corsHeaders());
         }
@@ -142,7 +144,11 @@ class RequestController extends Controller
 
         $contentType = $request->isJson() ? 'application/json' : 'text/plain';
 
-        return new Response($request->content, Response::HTTP_OK, ['content-type' => $contentType]);
+        return new Response(
+            $request->content,
+            Response::HTTP_OK,
+            ['content-type' => $contentType] + static::untrustedContentHeaders()
+        );
     }
 
     /**
