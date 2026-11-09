@@ -60,15 +60,18 @@ class RequestController extends Controller
 
         broadcast(new RequestCreated($token, $request));
 
-        $responseStatus = preg_match('/[1-5][0-9][0-9]/', $httpRequest->segment(2))
-            ? $httpRequest->segment(2)
-            : $token->default_status;
+        // /{token}/{status} overrides the URL's default status. Only an exact
+        // three-digit segment counts: paths such as /{token}/2024-01-01 used to be
+        // taken as a status code and made the response fail with HTTP 500.
+        $responseStatus = preg_match('/\A[1-5][0-9]{2}\z/', (string) $httpRequest->segment(2))
+            ? (int) $httpRequest->segment(2)
+            : self::validStatus($token->default_status);
 
         $response = new Response(
             $token->default_content,
             $responseStatus,
             [
-                'Content-Type' => $token->default_content_type,
+                'Content-Type' => self::validContentType($token->default_content_type),
                 'X-Request-Id' => $request->uuid,
                 'X-Token-Id' => $token->uuid,
             ]
@@ -81,6 +84,31 @@ class RequestController extends Controller
         }
 
         return $response;
+    }
+
+    /**
+     * Settings are validated when a URL is created or updated; this also covers
+     * URLs stored before that validation existed.
+     *
+     * @param mixed $status
+     * @return int
+     */
+    private static function validStatus($status): int
+    {
+        $status = (int) $status;
+
+        return $status >= 100 && $status <= 599 ? $status : Response::HTTP_OK;
+    }
+
+    /**
+     * @param mixed $contentType
+     * @return string
+     */
+    private static function validContentType($contentType): string
+    {
+        return is_string($contentType) && preg_match('/\A[\x20-\x7E]{1,255}\z/', $contentType)
+            ? $contentType
+            : 'text/plain';
     }
 
     /**
