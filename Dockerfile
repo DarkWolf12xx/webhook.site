@@ -28,7 +28,10 @@ FROM php:8.5.12-fpm-alpine3.23@sha256:35eb24f8520b817fb9329fbd678c3ea3310ac673e5
 
 # Alpine only keeps the newest revision of a package in its repositories, so packages
 # are pinned to their release series (~) rather than to an exact revision.
-RUN apk add --no-cache \
+# `apk upgrade` applies security updates released after the base image was built
+# (e.g. zlib 1.4-r0 for CVE-2026-4738); the Alpine release itself stays 3.23.
+RUN apk upgrade --no-cache \
+    && apk add --no-cache \
         'nginx~1.28' \
         's6-overlay~3.2' \
     && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
