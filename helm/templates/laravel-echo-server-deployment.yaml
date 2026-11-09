@@ -36,7 +36,7 @@ spec:
               value: 0.0.0.0
             - name: LARAVEL_ECHO_SERVER_PORT
               value: "6001"
-          image: webhooksite/laravel-echo-server
+          image: webhooksite/laravel-echo-server@sha256:b013ed5b591c800f78cb89c4bb49de64316eb650277fa898d372e24b2fc5f576
           name: laravel-echo-server
           ports:
             - protocol: TCP
