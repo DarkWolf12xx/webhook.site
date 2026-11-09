@@ -30,6 +30,26 @@ return [
     // captured requests, so unbounded creation exhausts memory.
     'token_create_rate_limit' => (int) env('WEBHOOK_TOKEN_RATE_LIMIT', 60),
 
+    // Content-Security-Policy of the web UI. "{nonce}" is replaced per response.
+    // - connect-src is open because "Redirect" re-sends captured requests from the
+    //   browser to any URL the user configures (and Pusher/socket.io may use another
+    //   host or port);
+    // - buttons.github.io serves the GitHub star button;
+    // - 'unsafe-inline' styles are needed by AngularJS/Bootstrap widgets.
+    'ui_csp' => env('WEBHOOK_UI_CSP', implode('; ', [
+        "default-src 'self'",
+        "script-src 'self' 'nonce-{nonce}' https://buttons.github.io",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: https:",
+        "font-src 'self' data:",
+        'connect-src *',
+        'frame-src https://buttons.github.io',
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'none'",
+    ])),
+
     /*
     |--------------------------------------------------------------------------
     | Application Name

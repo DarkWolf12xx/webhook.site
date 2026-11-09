@@ -24,6 +24,7 @@ class Kernel extends HttpKernel
         // Reject bodies above post_max_size with 413 instead of capturing a
         // request whose body PHP silently discarded
         ValidatePostSize::class,
+        Middleware\SecurityHeaders::class,
     ];
 
     /**
