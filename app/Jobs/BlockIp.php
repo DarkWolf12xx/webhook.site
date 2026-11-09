@@ -27,10 +27,11 @@ class BlockIp extends Job implements ShouldQueue
      */
     public function handle(LoggerInterface $log)
     {
+        // Symfony Process requires an argument array (no shell is involved).
         if (filter_var($this->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false) {
-            $command = sprintf('sudo ufw insert 1 proto ipv6 deny from %s', $this->ip);
+            $command = ['sudo', 'ufw', 'insert', '1', 'proto', 'ipv6', 'deny', 'from', $this->ip];
         } elseif (filter_var($this->ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) {
-            $command = sprintf('sudo ufw insert 1 deny from %s', $this->ip);
+            $command = ['sudo', 'ufw', 'insert', '1', 'deny', 'from', $this->ip];
         } else {
             $log->warning('BlockIp: Invalid IP address', ['ip' => $this->ip]);
             return;
@@ -41,7 +42,7 @@ class BlockIp extends Job implements ShouldQueue
 
         $log->info('Blocking ip', [
             'ip' => $this->ip,
-            'command' => $command,
+            'command' => $process->getCommandLine(),
             'output' => $process->getOutput(),
             'error_output' => $process->getErrorOutput(),
         ]);

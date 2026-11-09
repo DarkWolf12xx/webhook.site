@@ -88,7 +88,7 @@ class RequestStore implements \App\Storage\RequestStore
     {
         $result = $this
             ->redis
-            ->hmset(
+            ->hset(
                 Request::getIdentifier($token->uuid),
                 $request->uuid,
                 json_encode($request->attributes())

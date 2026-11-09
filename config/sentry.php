@@ -1,14 +1,22 @@
 <?php
 
-return array(
-    'dsn' => env('SENTRY_DSN'),
+/**
+ * Sentry Laravel SDK configuration (sentry/sentry-laravel 4.x).
+ * Options not listed here fall back to the package defaults.
+ *
+ * @see https://docs.sentry.io/platforms/php/guides/laravel/configuration/options/
+ */
+return [
 
-    // capture release as git sha
-    // 'release' => trim(exec('git log --pretty="%h" -n1 HEAD')),
+    // Error reporting is disabled unless a DSN is configured.
+    'dsn' => env('SENTRY_LARAVEL_DSN', env('SENTRY_DSN')),
 
-    // Capture bindings on SQL queries
-    'breadcrumbs.sql_bindings' => true,
+    'release' => env('SENTRY_RELEASE'),
 
-    // Capture default user context
-    'user_context' => true,
-);
+    'environment' => env('SENTRY_ENVIRONMENT'),
+
+    // Do not attach personally identifiable information (IP addresses, cookies,
+    // request bodies) to error reports by default.
+    'send_default_pii' => env('SENTRY_SEND_DEFAULT_PII', false),
+
+];

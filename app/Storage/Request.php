@@ -9,14 +9,14 @@ use Ramsey\Uuid\Uuid;
 class Request extends Entity
 {
     /**
-     * @param $tokenId
-     * @param null $requestId
+     * @param string $tokenId
+     * @param string|null $requestId
      * @return string
      */
     public static function getIdentifier($tokenId, $requestId = null)
     {
         if ($requestId) {
-            return sprintf('token:%s:requests:%s', $requestId);
+            return sprintf('token:%s:requests:%s', $tokenId, $requestId);
         }
 
         return sprintf('token:%s:requests', $tokenId);
@@ -35,7 +35,7 @@ class Request extends Entity
             'hostname' => $httpRequest->getHost(),
             'method' => $httpRequest->getMethod(),
             'user_agent' => $httpRequest->header('User-Agent'),
-            'content' => file_get_contents('php://input'),
+            'content' => $httpRequest->getContent(),
             'query' => empty($httpRequest->query->all()) ? null : $httpRequest->query->all(),
             'headers' => $httpRequest->headers->all(),
             'url' => $httpRequest->fullUrl(),
@@ -55,6 +55,7 @@ class Request extends Entity
      */
     public function isJson()
     {
-        return $this->headers['content-type'][0] === 'application/json';
+        // Requests without a body (e.g. GET) have no Content-Type header at all.
+        return ($this->headers['content-type'][0] ?? null) === 'application/json';
     }
 }
